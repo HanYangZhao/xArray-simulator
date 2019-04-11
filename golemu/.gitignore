@@ -1,0 +1,8 @@
+*.bak
+*.csv
+*.gob
+*.json
+*.old
+*.swp
+sim/*
+vendor/*
