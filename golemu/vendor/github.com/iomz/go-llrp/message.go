@@ -81,7 +81,8 @@ func GetReaderCapabilityResponse(messageID uint32) []byte {
 	llrpStatus := Status()
 	generalCapabilites := GeneralDeviceCapabilities()
 	llrpCapabilities := LlrpCapabilities()
-	c1g2llrpCapabilities := C1G2llrpCapabilities()
+	//c1g2llrpCapabilities := C1G2llrpCapabilities()
+	reguCapabilitles := ReguCapabilities()
 	var data = []interface{}{
 		uint8(4),  //version
 		uint8(11), //type
@@ -90,7 +91,11 @@ func GetReaderCapabilityResponse(messageID uint32) []byte {
 		llrpStatus,
 		generalCapabilites,
 		llrpCapabilities,
-		c1g2llrpCapabilities,
+		reguCapabilitles,
+		uint8(0),
+		uint8(0),
+		uint8(0),
+		//c1g2llrpCapabilities,
 	}
 	return Pack(data)
 }
@@ -152,8 +157,8 @@ func AddRospecResponse(messageID uint32) []byte {
 	return Pack(data)
 }
 
-//EnabledRospecResponse : Enabled Rospec Response
-func EnabledRospecResponse(messageID uint32) []byte {
+//EnableRospecResponse : Enabled Rospec Response
+func EnableRospecResponse(messageID uint32) []byte {
 	llrpStatus := Status()
 	var data = []interface{}{
 		uint8(4),   //version 1.0.1
@@ -163,4 +168,58 @@ func EnabledRospecResponse(messageID uint32) []byte {
 		llrpStatus,
 	}
 	return Pack(data)
+}
+
+//ReceiveSensitivityEntries : Generates ReceiveSensitivityEntries used in General capabilities
+func ReceiveSensitivityEntries(numOfAntennas int) []interface{} {
+	var data = []interface{}{}
+	for i := 1; i <= numOfAntennas; i++ {
+		x := ReceiveSensitivityEntry(uint16(i))
+		data = append(data, x)
+	}
+	return data
+}
+
+//ReceiveSensitivityEntry :
+func ReceiveSensitivityEntry(id uint16) []interface{} {
+	var data = []interface{}{
+		uint16(139), //type
+		uint16(8),   //length
+		uint16(id),  //length
+		uint16(11),  //receive sentitvitiy value
+	}
+	return data
+}
+
+//GPIOCapabilities : Generates GPIO capabilities proeprty
+func GPIOCapabilities() []byte {
+	var data = []interface{}{
+		uint16(141), //type
+		uint16(8),   //length
+		uint16(0),   //num of GPI port
+		uint16(0),   //num of GPO port
+	}
+	return Pack(data)
+}
+
+//AntennaAirPortList :
+func AntennaAirPortList(numOfAntennas int) []interface{} {
+	var data = []interface{}{}
+	for i := 1; i <= numOfAntennas; i++ {
+		x := AntennaAirPort(uint16(i))
+		data = append(data, x)
+	}
+	return data
+}
+
+//AntennaAirPort :
+func AntennaAirPort(id uint16) []interface{} {
+	var data = []interface{}{
+		uint16(140), //type
+		uint16(9),   //length
+		id,
+		uint16(1), //num of protocols
+		uint8(1),  //protocol id : EPCGlobal Class 1 Gen 2
+	}
+	return data
 }

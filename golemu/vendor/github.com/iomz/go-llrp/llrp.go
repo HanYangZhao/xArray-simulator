@@ -30,7 +30,7 @@ const (
 	AddRospecHeader                   = 1044 // type 20
 	AddRospecResponseHeader           = 1054 // type 30
 	EnableRospecHeader                = 1048 // type 24
-	EnableRospecResponse              = 1058 // type 34
+	EnableRospecResponseHeader        = 1058 // type 34
 )
 
 // Pack the data into (partial) LLRP packet payload.

@@ -212,7 +212,7 @@ func handleRequest(conn net.Conn, tags llrp.Tags) {
 			if header == llrp.EnableRospecHeader {
 				// SRC received, start ROAR
 				log.Info(">>> ENABLE_ROSPEC")
-				conn.Write(llrp.EnabledRospecResponse(currentMessageID))
+				conn.Write(llrp.EnableRospecResponse(currentMessageID))
 				atomic.AddUint32(&currentMessageID, 1)
 				runtime.Gosched()
 				log.Info("<<< ENABLE_ROSPEC_RESPONSE")

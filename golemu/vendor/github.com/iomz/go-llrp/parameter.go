@@ -124,15 +124,23 @@ func UTCTimeStamp(currentTime uint64) []byte {
 
 //GeneralDeviceCapabilities : Generates General Device Capabilities
 func GeneralDeviceCapabilities() []byte {
+	numOfAntennas := 52
 	var data = []interface{}{
-		uint16(137),                        //Type 137
-		uint16(28),                         //Length
-		uint16(52),                         //Max Antenna
-		uint16(16384),                      //UTC clock support
-		uint32(25882),                      //Manufacturer
-		uint32(2001007),                    //Model
-		[]byte("000a352e31342e302e323430"), //firmware version 5.14.0.240
+		uint16(137),           //Type 137
+		uint16(28),            //Length
+		uint16(numOfAntennas), //Max Antenna
+		uint16(16384),         //UTC clock support
+		uint32(25882),         //Manufacturer
+		uint32(2001007),       //Model
+		uint32(0x000a352e),
+		uint32(0x31342e30),
+		uint32(0x2e323430),
 	}
+	// data = append(data, []byte("000a352e31342e302e323430")) //firmware version 5.14.0.240)
+	// data = append(data, ReceiveSensitivityEntries(numOfAntennas))
+	// data = append(data, GPIOCapabilities())
+	// data = append(data, AntennaAirPortList(numOfAntennas))
+	// fmt.Print(data)
 	return Pack(data)
 }
 
@@ -156,10 +164,11 @@ func LlrpCapabilities() []byte {
 //ReguCapabilities : generates Regulatory Capabilities
 func ReguCapabilities() []byte {
 	var data = []interface{}{
-		uint16(143), //type 143
-		uint16(8),   //length
-		uint16(840), // country code
-		uint16(1),   //comm standards, fcc part 15
+		uint16(143),  //type 143
+		uint16(1197), //length
+		uint16(840),  // country code
+		uint16(1),    //comm standards, fcc part 15
+		UHFCapabilities(52),
 	}
 	return Pack(data)
 }
@@ -186,6 +195,7 @@ func GetReaderConfigResponseIdentification() []byte {
 	return Pack(data)
 }
 
+//AntennaProperties :
 func AntennaProperties(id uint16) []byte {
 	var data = []interface{}{
 		uint16(221), //type
@@ -193,6 +203,108 @@ func AntennaProperties(id uint16) []byte {
 		uint16(128), //antenna connected
 		id,
 		uint16(0), //gain
+	}
+	return Pack(data)
+}
+
+// UHFCapabilities :
+func UHFCapabilities(numOfAntennas int) []byte {
+	//length := 8*numOfAntennas + 2 + 2
+	var data = []interface{}{
+		uint16(144),  //type
+		uint16(1189), //length
+	}
+	x := Pack(data)
+	numOfPowerLevel := 81
+	for i := 1; i <= numOfPowerLevel; i++ {
+		x = append(x, TransmitPowerLevelEntry(uint16(i), uint16(1000+25*i))...)
+	}
+	x = append(x, FrequencyInformation()...)
+	x = append(x, C1G2UHFModeRFTable()...)
+	return x
+}
+
+//TransmitPowerLevelEntry :
+func TransmitPowerLevelEntry(id uint16, powerLevel uint16) []byte {
+	var data = []interface{}{
+		uint16(145),        //type
+		uint16(8),          //length
+		uint16(id),         //id
+		uint16(powerLevel), //power value
+	}
+	return Pack(data)
+}
+
+func FrequencyInformation() []byte {
+	length := 2 + 2 + 1 + 2 + 2 + 1 + 1 + 2 + 208
+	var data = []interface{}{
+		uint16(146),    //type
+		uint16(length), //length
+		uint8(1),       //hopping
+	}
+	x := Pack(data)
+	x = append(x, FrequencyHopTable()...)
+	return x
+}
+
+func FrequencyHopTable() []byte {
+	numOfHops := 50
+	var data = []interface{}{
+		uint16(147),       //type
+		uint16(208),       //length
+		uint8(1),          // hop table id
+		uint8(0),          // reserved
+		uint16(numOfHops), //num of hops
+	}
+	x := Pack(data)
+	for i := 0; i < numOfHops; i++ {
+		x = append(x, frequency(903250+i*1000)...) //some random frequencies\
+	}
+	return x
+}
+
+func frequency(frequency int) []byte {
+	var data = []interface{}{
+		uint32(frequency),
+	}
+	return Pack(data)
+}
+
+func C1G2UHFModeRFTable() []byte {
+
+	length := 2 + 2 + 320
+	var data = []interface{}{
+		uint16(147),    //type
+		uint16(length), //length
+	}
+	x := Pack(data)
+	x = append(x, C1G2UHFModeRFTableEntry(0)...)
+	x = append(x, C1G2UHFModeRFTableEntry(1)...)
+	x = append(x, C1G2UHFModeRFTableEntry(2)...)
+	x = append(x, C1G2UHFModeRFTableEntry(3)...)
+	x = append(x, C1G2UHFModeRFTableEntry(4)...)
+	x = append(x, C1G2UHFModeRFTableEntry(1000)...)
+	x = append(x, C1G2UHFModeRFTableEntry(1001)...)
+	x = append(x, C1G2UHFModeRFTableEntry(1002)...)
+	x = append(x, C1G2UHFModeRFTableEntry(1003)...)
+	x = append(x, C1G2UHFModeRFTableEntry(1004)...)
+	return x
+}
+
+func C1G2UHFModeRFTableEntry(mode int) []byte {
+	var data = []interface{}{
+		uint16(329),    //type
+		uint16(32),     //length
+		uint32(mode),   //mode identifier
+		uint8(80),      //dr : yes , EPC HAG T&C confromance : no
+		uint8(0),       //m : 0
+		uint8(2),       // forward link mod
+		uint8(2),       //speectral mask indicator
+		uint32(640000), // bdr
+		uint32(1500),   //PIE
+		uint32(6250),   //max tari
+		uint32(6250),   //min tari
+		uint32(0),      //tari step
 	}
 	return Pack(data)
 }
