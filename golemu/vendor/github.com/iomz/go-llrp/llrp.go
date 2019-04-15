@@ -31,6 +31,7 @@ const (
 	AddRospecResponseHeader           = 1054 // type 30
 	EnableRospecHeader                = 1048 // type 24
 	EnableRospecResponseHeader        = 1058 // type 34
+	ImpinjEnableCutomMessageHeader    = 2047 // type 1023
 )
 
 // Pack the data into (partial) LLRP packet payload.
@@ -49,7 +50,6 @@ func Pack(data []interface{}) []byte {
 // ReadEvent is the struct to hold data on RFTags
 type ReadEvent struct {
 	ID []byte
-	PC []byte
 }
 
 // UnmarshalROAccessReportBody extract ReadEvent from the message value in the ROAccessReport
@@ -71,26 +71,26 @@ func UnmarshalROAccessReportBody(roarBody []byte) []*ReadEvent {
 
 		// look into TagReportData
 		// Now the offset is at the first parameter in the TRD
-		var id, pc []byte
+		var id []byte
 		if roarBody[offset] == 141 { // EPC-96
 			id = roarBody[offset+1 : offset+13]
 			offset += 13
-			if roarBody[offset] == 140 { // C1G2-PC parameter
-				pc = roarBody[offset+1 : offset+3]
-				offset += 3
-			}
+			// if roarBody[offset] == 140 { // C1G2-PC parameter
+			// 	pc = roarBody[offset+1 : offset+3]
+			// 	offset += 3
+			// }
 		} else if binary.BigEndian.Uint16(roarBody[offset:offset+2]) == 241 { // EPCData
 			epcDataLength := int(binary.BigEndian.Uint16(roarBody[offset+2 : offset+4])) // length
 			//epcLengthBits := binary.BigEndian.Uint16(roarBody[offset+4 : offset+6])      // EPCLengthBits
 			id = roarBody[offset+6 : offset+epcDataLength]
 			offset += epcDataLength
-			if roarBody[offset] == 140 { // C1G2-PC parameter
-				pc = roarBody[offset+1 : offset+3]
-				offset += 3
-			}
+			// if roarBody[offset] == 140 { // C1G2-PC parameter
+			// 	pc = roarBody[offset+1 : offset+3]
+			// 	offset += 3
+			// }
 		}
 		// append the id and pc as an ReadEvent
-		res = append(res, &ReadEvent{id, pc})
+		res = append(res, &ReadEvent{id})
 	}
 	return res
 }

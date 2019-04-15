@@ -77,25 +77,25 @@ func GetReaderCapability(messageID uint32) []byte {
 
 //GetReaderCapabilityResponse :
 func GetReaderCapabilityResponse(messageID uint32) []byte {
-	getReaderCapabilityResponseLength := 89 //2+4+4+8(llrpstatus)+28+28+8+7
+
 	llrpStatus := Status()
 	generalCapabilites := GeneralDeviceCapabilities()
 	llrpCapabilities := LlrpCapabilities()
-	//c1g2llrpCapabilities := C1G2llrpCapabilities()
+	c1g2llrpCapabilities := C1G2llrpCapabilities()
 	reguCapabilitles := ReguCapabilities()
+	length := 2 + 4 + 4 + len(llrpStatus) + len(generalCapabilites) + len(llrpCapabilities) + len(reguCapabilitles) + len(c1g2llrpCapabilities)
 	var data = []interface{}{
-		uint8(4),  //version
-		uint8(11), //type
-		uint32(getReaderCapabilityResponseLength),
-		messageID,
+		uint16(GetReaderCapabilityResponseHeader),
+		uint32(length),
+		uint32(messageID),
 		llrpStatus,
 		generalCapabilites,
 		llrpCapabilities,
 		reguCapabilitles,
-		uint8(0),
-		uint8(0),
-		uint8(0),
-		//c1g2llrpCapabilities,
+		// uint8(0),
+		// uint8(0),
+		// uint8(0),
+		c1g2llrpCapabilities,
 	}
 	return Pack(data)
 }
@@ -103,18 +103,23 @@ func GetReaderCapabilityResponse(messageID uint32) []byte {
 //GetReaderConfigResponse :
 func GetReaderConfigResponse(messageID uint32) []byte {
 	llrpStatus := Status()
+	//numOfAntennas := 52
 	identification := GetReaderConfigResponseIdentification()
-	length := 1 + 1 + 2 + 8 + 15 + 9
+	length := 2 + 4 + 4 + len(llrpStatus) + len(identification) //+ numOfAntennas*9 + numOfAntennas*36
 	var data = []interface{}{
-		uint8(4),  //version 1.0.1
-		uint8(12), //type
+		uint16(GetReaderConfigResponseHeader),
 		uint32(length),
 		messageID,
 		llrpStatus,
 		identification,
-		AntennaProperties(1),
 	}
-
+	// x := Pack(data)
+	// for i := 1; i <= numOfAntennas; i++ {
+	// 	x = append(x, AntennaProperties(uint16(i))...)
+	// }
+	// for i := 1; i <= numOfAntennas; i++ {
+	// 	x = append(x, AntennaConfiguration(uint16(i))...)
+	// }
 	return Pack(data)
 }
 
@@ -122,9 +127,8 @@ func GetReaderConfigResponse(messageID uint32) []byte {
 func DeleteAccessSpecResponse(messageID uint32) []byte {
 	llrpStatus := Status()
 	var data = []interface{}{
-		uint8(4),   //version 1.0.1
-		uint8(51),  //type
-		uint16(18), //length
+		uint16(DeleteAccessSpecResponseHeader),
+		uint32(18), //length
 		messageID,
 		llrpStatus,
 	}
@@ -135,9 +139,8 @@ func DeleteAccessSpecResponse(messageID uint32) []byte {
 func DeleteRospecResponse(messageID uint32) []byte {
 	llrpStatus := Status()
 	var data = []interface{}{
-		uint8(4),   //version 1.0.1
-		uint8(31),  //type
-		uint16(18), //length
+		uint16(DeleteRospecResponseHeader),
+		uint32(18), //length
 		messageID,
 		llrpStatus,
 	}
@@ -148,9 +151,8 @@ func DeleteRospecResponse(messageID uint32) []byte {
 func AddRospecResponse(messageID uint32) []byte {
 	llrpStatus := Status()
 	var data = []interface{}{
-		uint8(4),   //version 1.0.1
-		uint8(30),  //type
-		uint16(18), //length
+		uint16(AddRospecResponseHeader),
+		uint32(18), //length
 		messageID,
 		llrpStatus,
 	}
@@ -161,9 +163,8 @@ func AddRospecResponse(messageID uint32) []byte {
 func EnableRospecResponse(messageID uint32) []byte {
 	llrpStatus := Status()
 	var data = []interface{}{
-		uint8(4),   //version 1.0.1
-		uint8(34),  //type
-		uint16(18), //length
+		uint16(EnableRospecResponseHeader),
+		uint32(18), //length
 		messageID,
 		llrpStatus,
 	}
@@ -181,14 +182,14 @@ func ReceiveSensitivityEntries(numOfAntennas int) []interface{} {
 }
 
 //ReceiveSensitivityEntry :
-func ReceiveSensitivityEntry(id uint16) []interface{} {
+func ReceiveSensitivityEntry(id uint16) []byte {
 	var data = []interface{}{
 		uint16(139), //type
 		uint16(8),   //length
-		uint16(id),  //length
+		uint16(id),  //id
 		uint16(11),  //receive sentitvitiy value
 	}
-	return data
+	return Pack(data)
 }
 
 //GPIOCapabilities : Generates GPIO capabilities proeprty
@@ -213,13 +214,13 @@ func AntennaAirPortList(numOfAntennas int) []interface{} {
 }
 
 //AntennaAirPort :
-func AntennaAirPort(id uint16) []interface{} {
+func AntennaAirPort(id uint16) []byte {
 	var data = []interface{}{
 		uint16(140), //type
 		uint16(9),   //length
-		id,
+		uint16(id),
 		uint16(1), //num of protocols
 		uint8(1),  //protocol id : EPCGlobal Class 1 Gen 2
 	}
-	return data
+	return Pack(data)
 }
